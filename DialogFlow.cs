@@ -1,7 +1,6 @@
 using System;
 using Google.Cloud.Dialogflow.V2;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Telegram.Bot.Args;
 using System.IO;
 
@@ -15,15 +14,17 @@ namespace DioCarrefourBot
             SessionClient sc = new SessionClient();
             //Dando o nome do arquivo onde está as informações para conexão com o DialogFlow
             dynamic filePath = File.ReadAllText("DioCarrefourBot.json");
+
+            System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", "DioCarrefourBot.json");
                        
-            dynamic jsonTratado = JsonSerializer.Deserialize<SessionClient>(filePath);
+            dynamic jsonTratado = JsonSerializer.Deserialize<SessionClient>(filePath);   
 
             //Atribuindo valores do Parse as variáveis do objeto
             sc.client_email = jsonTratado.client_email;                
             sc.private_key = jsonTratado.private_key;
-            sc.project_id = jsonTratado.project_id;  
-
-            SessionsClient client = await SessionsClient.CreateAsync();
+            sc.project_id = jsonTratado.project_id;       
+            
+            SessionsClient sessionsClient = await SessionsClient.CreateAsync();
 
             DetectIntentRequest request = new DetectIntentRequest 
             {
@@ -37,11 +38,11 @@ namespace DioCarrefourBot
                     }
                 }
             };           
-            DetectIntentResponse response = await client.DetectIntentAsync(request);
+            DetectIntentResponse response = await sessionsClient.DetectIntentAsync(request);
 
             await Program.botClient.SendTextMessageAsync(
                 chatId: e.Message.Chat.Id,
-                text: response.QueryResult.FulfillmentText
+                text:  e.Message.Chat.FirstName + ", " + response.QueryResult.FulfillmentText
             );
         }
     }        
