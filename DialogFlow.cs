@@ -1,8 +1,9 @@
 using System;
-using Google.Cloud.Dialogflow.V2;
-using System.Text.Json;
-using Telegram.Bot.Args;
 using System.IO;
+using System.Text.Json;
+using Google.Cloud.Dialogflow.V2;
+using Telegram.Bot.Args;
+using Telegram.Bot.Types.ReplyMarkups;
 
 
 namespace DioCarrefourBot
@@ -57,15 +58,17 @@ namespace DioCarrefourBot
                 
                 // Telegram Bot respondendo com texto de acordo com a mensagem retornada
                 if(response.QueryResult.FulfillmentText.Contains("http")){
+
+                    string[] link = response.QueryResult.FulfillmentText.Split(" | ");
+
                     await Program.botClient.SendTextMessageAsync(
                         chatId: e.Message.Chat.Id,
-                        text: response.QueryResult.Intent.DisplayName + "? Aqui está o link para suas dúvidas:" );  
-
-                    await Program.botClient.SendPhotoAsync(
-                        chatId: e.Message.Chat.Id,
-                        photo: "https://www.grupocarrefourbrasil.com.br/wp-content/uploads/sites/174/2019/09/crf_banco_logo_horizontal_colour_rgb.png",
-                        caption: response.QueryResult.FulfillmentText                 
-                    );                 
+                        text: link[0] + " Aqui está o link para suas dúvidas:", 
+                        replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl(
+                            response.QueryResult.Intent.DisplayName,
+                            link[1]                       
+                        ))
+                    );              
                 } else {
                     await Program.botClient.SendTextMessageAsync(
                         chatId: e.Message.Chat.Id,
@@ -76,7 +79,7 @@ namespace DioCarrefourBot
                 // MemoryStream lê ou grava bytes armazenados na memória, no caso no response.
                 MemoryStream ms = new MemoryStream(response.OutputAudio.ToByteArray());
 
-                // Telegram Bot respondendo com audio de acordo com a mensagem retornada
+                // Bot respondendo com audio
                 await Program.botClient.SendVoiceAsync(
                     chatId: e.Message.Chat.Id,
                     voice: ms
